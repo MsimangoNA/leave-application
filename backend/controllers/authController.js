@@ -41,6 +41,8 @@ exports.login = async (req, res) => {
   }
 };
 
+
+
 exports.refresh = async (req, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken) return res.status(400).json({ msg: 'No refresh token provided' });
@@ -56,6 +58,8 @@ exports.refresh = async (req, res) => {
     res.status(401).json({ msg: 'Refresh token invalid or expired' });
   }
 };
+
+
 
 exports.logout = async (req, res) => {
   const { refreshToken } = req.body;

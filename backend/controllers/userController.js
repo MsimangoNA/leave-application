@@ -42,6 +42,7 @@ exports.updateUser = async (req, res) => {
     const { role, department, managerId, name, email } = req.body;
     const existing = await User.findById(req.params.id);
     if (!existing) return res.status(404).json({ msg: 'User not found' });
+    const { hireDate } = req.body;
     const finalRole = role || existing.role;
     // If after update the role is employee, ensure a manager exists (either provided or already set)
     if (finalRole === 'employee') {
@@ -65,8 +66,55 @@ exports.updateUser = async (req, res) => {
     if (managerId !== undefined) updates.manager = managerId || null;
     if (email !== undefined) updates.email = email;
     if (name) updates.name = name;
-    const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true }).select('name email role department');
-    res.json({ user });
+    if (hireDate !== undefined) {
+      const hd = new Date(hireDate);
+      if (Number.isNaN(hd.getTime())) return res.status(400).json({ msg: 'Invalid hireDate' });
+      const now = new Date();
+      // do not allow future hire dates
+      if (hd > now) return res.status(400).json({ msg: 'hireDate cannot be in the future' });
+      updates.hireDate = hd;
+    }
+    const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true });
+
+    // If hireDate was updated (or entitlement fields missing), recompute remaining balances
+    if (hireDate !== undefined || typeof user.annualRemaining !== 'number' || typeof user.sickRemaining !== 'number' || typeof user.familyRemaining !== 'number') {
+      // compute accrued annual based on hireDate (1.5 days/month, capped at 18)
+      const DEFAULT_ANNUAL = 18;
+      const DEFAULT_SICK = 30;
+      const DEFAULT_FAMILY = 3;
+      const hd = user.hireDate ? new Date(user.hireDate) : new Date();
+      const now = new Date();
+      const years = now.getFullYear() - hd.getFullYear();
+      const months = now.getMonth() - hd.getMonth();
+      const totalMonths = years * 12 + months;
+      const annualAccrued = Math.min(DEFAULT_ANNUAL, Math.max(0, totalMonths * 1.5));
+
+      // sum approved days by type for this user
+      const takenAgg = await require('../models/Leave').aggregate([
+        { $match: { applicant: user._id, status: 'Approved' } },
+        { $group: { _id: '$type', total: { $sum: '$days' } } }
+      ]);
+      const takenMap = {};
+      for (const t of takenAgg) takenMap[t._id] = t.total || 0;
+
+      const annualTaken = takenMap['annual'] || 0;
+      const sickTaken = takenMap['sick'] || 0;
+      const familyTaken = takenMap['family'] || 0;
+
+      const sickEnt = typeof user.sickEntitlement === 'number' ? user.sickEntitlement : DEFAULT_SICK;
+      const familyEnt = typeof user.familyEntitlement === 'number' ? user.familyEntitlement : DEFAULT_FAMILY;
+
+      user.annualEntitlement = DEFAULT_ANNUAL;
+      user.annualRemaining = annualAccrued - annualTaken;
+      user.sickEntitlement = sickEnt;
+      user.sickRemaining = sickEnt - sickTaken;
+      user.familyEntitlement = familyEnt;
+      user.familyRemaining = familyEnt - familyTaken;
+      await user.save();
+    }
+
+    const out = await User.findById(user._id).select('name email role department hireDate annualEntitlement annualRemaining sickEntitlement sickRemaining familyEntitlement familyRemaining');
+    res.json({ user: out });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: 'Server error' });

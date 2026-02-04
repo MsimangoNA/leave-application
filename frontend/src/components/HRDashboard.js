@@ -23,7 +23,7 @@ export default function HRDashboard({ user }) {
     'Operations',
     'Customer Success'
   ];
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'employee', department: DEPARTMENTS[0], managerId: '' });
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'employee', department: DEPARTMENTS[0], managerId: '', hireDate: '' });
   const [creating, setCreating] = useState(false);
   const [formErr, setFormErr] = useState(null);
 
@@ -151,6 +151,10 @@ export default function HRDashboard({ user }) {
                       ))}
                     </select>
                   </div>
+                  <div className="col-12 col-md-6">
+                    <label className="form-label">Hire Date (optional)</label>
+                    <input className="form-control" type="date" value={newUser.hireDate} onChange={e => setNewUser({ ...newUser, hireDate: e.target.value })} />
+                  </div>
                   <div className="col-12">
                     <div className="d-flex flex-column flex-sm-row gap-2">
                       <button className="btn btn-primary btn-full-sm" onClick={createUser} disabled={creating}>{creating ? 'Creating…' : 'Create'}</button>
@@ -242,7 +246,8 @@ export default function HRDashboard({ user }) {
 
 function UserListItem({ user, users, onUpdated, onDeleted, showToast, departments = [], openConfirm }) {
   const [editing, setEditing] = useState(false);
-  const [edit, setEdit] = useState({ name: user.name, email: user.email, role: user.role, department: user.department || '', managerId: user.manager || '' });
+  const initialHire = user.hireDate ? (typeof user.hireDate === 'string' ? user.hireDate.slice(0,10) : new Date(user.hireDate).toISOString().slice(0,10)) : '';
+  const [edit, setEdit] = useState({ name: user.name, email: user.email, role: user.role, department: user.department || '', managerId: user.manager || '', hireDate: initialHire });
   const [saving, setSaving] = useState(false);
   const confirmLocal = useConfirm();
 
@@ -261,7 +266,7 @@ function UserListItem({ user, users, onUpdated, onDeleted, showToast, department
         setSaving(false);
         return;
       }
-          await API.patch(`/users/${user._id || user.id}`, { name: edit.name, email: edit.email, role: edit.role, department: edit.department, managerId: edit.managerId });
+          await API.patch(`/users/${user._id || user.id}`, { name: edit.name, email: edit.email, role: edit.role, department: edit.department, managerId: edit.managerId, hireDate: edit.hireDate || undefined });
       showToast('User updated', 'success');
       setEditing(false);
       onUpdated();
@@ -294,7 +299,8 @@ function UserListItem({ user, users, onUpdated, onDeleted, showToast, department
           <div className="d-flex gap-2">
             <button className="btn btn-sm btn-outline-secondary" onClick={() => {
               const mgrVal = user.manager ? (typeof user.manager === 'string' ? String(user.manager) : (user.manager._id ? String(user.manager._id) : (user.manager.id ? String(user.manager.id) : ''))) : '';
-              setEdit({ name: user.name, email: user.email, role: user.role, department: user.department || '', managerId: mgrVal });
+              const hd = user.hireDate ? (typeof user.hireDate === 'string' ? user.hireDate.slice(0,10) : new Date(user.hireDate).toISOString().slice(0,10)) : '';
+              setEdit({ name: user.name, email: user.email, role: user.role, department: user.department || '', managerId: mgrVal, hireDate: hd });
               setEditing(true);
             }}> <i className="bi bi-pencil-fill me-1"></i>Edit</button>
             <button className="btn btn-sm btn-outline-danger" onClick={remove}><i className="bi bi-trash-fill me-1"></i>Delete</button>
@@ -329,6 +335,9 @@ function UserListItem({ user, users, onUpdated, onDeleted, showToast, department
                   <option key={String(u._id || u.id || u.email)} value={String(u._id || u.id || u.email)}>{u.name} — {u.department || ''}</option>
                 ))}
               </select>
+            </div>
+            <div className="col-6 col-md-2">
+              <input className="form-control" type="date" value={edit.hireDate || ''} onChange={e => setEdit({...edit, hireDate: e.target.value})} />
             </div>
             <div className="col-12 col-md-2 d-flex gap-2">
               <button className="btn btn-sm btn-primary" onClick={save} disabled={saving}>{saving ? <><i className="bi bi-arrow-repeat me-1"></i>Saving…</> : <><i className="bi bi-save2-fill me-1"></i>Save</> }</button>

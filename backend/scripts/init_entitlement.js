@@ -15,6 +15,15 @@ mongoose.connection.on('connected', async () => {
         await u.save();
         console.log(`Initialized ${u.email} -> ${u.annualRemaining}`);
       }
+      // ensure sick and family fields exist
+      if (typeof u.sickEntitlement !== 'number' || typeof u.sickRemaining !== 'number' || typeof u.familyEntitlement !== 'number' || typeof u.familyRemaining !== 'number') {
+        u.sickEntitlement = typeof u.sickEntitlement === 'number' ? u.sickEntitlement : 30;
+        u.sickRemaining = typeof u.sickRemaining === 'number' ? u.sickRemaining : u.sickEntitlement;
+        u.familyEntitlement = typeof u.familyEntitlement === 'number' ? u.familyEntitlement : 3;
+        u.familyRemaining = typeof u.familyRemaining === 'number' ? u.familyRemaining : u.familyEntitlement;
+        await u.save();
+        console.log(`Initialized sick/family for ${u.email}`);
+      }
     }
     console.log('Initialization complete.');
   } catch (err) {

@@ -13,9 +13,11 @@ const User = require('./models/User');
     await hr.save();
     const manager = new User({ name: 'Manager One', email: 'manager@company.com', password: 'password', role: 'manager', department: 'Engineering' });
     await manager.save();
+    const admin = new User({ name: 'Admin User', email: 'admin@company.com', password: 'password', role: 'admin' });
+    await admin.save();
     const employee = new User({ name: 'Employee One', email: 'employee@company.com', password: 'password', role: 'employee', department: 'Engineering', manager: manager._id, hireDate: new Date(new Date().setFullYear(new Date().getFullYear()-1)) });
     await employee.save();
-    console.log('Seeded HR, Manager, Employee (password = password)');
+    console.log('Seeded Admin, HR, Manager, Employee (password = password)');
     process.exit(0);
   } catch (err) {
     console.error(err);

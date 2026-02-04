@@ -28,7 +28,7 @@ exports.listUsers = async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'hr') return res.status(403).json({ msg: 'Forbidden' });
     // include manager reference so frontend can show/select current manager
-    const users = await User.find().select('name email role department manager').populate('manager', 'name');
+    const users = await User.find().select('name email role department manager annualEntitlement annualRemaining sickEntitlement sickRemaining familyEntitlement familyRemaining').populate('manager', 'name');
     res.json({ users });
   } catch (err) {
     console.error(err);

@@ -24,18 +24,20 @@ export default function EmployeeDashboard({ user }) {
             <div className="card-body">
               <h5 className="card-title"><i className="bi bi-bar-chart-line-fill me-2"></i>Accrual</h5>
               <div className="small text-muted">Current balances</div>
-              <div className="d-flex gap-3 mt-2">
-                <div>
-                  <div className="text-muted small">Accrued</div>
-                  <div className="fw-bold">{data ? data.accrual?.accrued ?? '-' : '...'}</div>
-                </div>
-                <div>
-                  <div className="text-muted small">Taken</div>
-                  <div className="fw-bold">{data ? data.accrual?.taken ?? '-' : '...'}</div>
-                </div>
-                <div>
-                  <div className="text-muted small">Remaining</div>
-                  <div className="fw-bold">{data ? data.accrual?.remaining ?? '-' : '...'}</div>
+              <div className="mt-2">
+                <div className="d-flex gap-4">
+                  <div>
+                    <div className="text-muted small">Annual (Remaining)</div>
+                    <div className="fw-bold">{data ? (data.accrual?.annual?.remaining ?? '-') : '...'}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted small">Sick (Remaining)</div>
+                    <div className="fw-bold">{data ? (data.accrual?.sick?.remaining ?? '-') : '...'}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted small">Family (Remaining)</div>
+                    <div className="fw-bold">{data ? (data.accrual?.family?.remaining ?? '-') : '...'}</div>
+                  </div>
                 </div>
               </div>
             </div>

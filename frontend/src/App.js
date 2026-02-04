@@ -3,6 +3,7 @@ import Login from './components/Login';
 import EmployeeDashboard from './components/EmployeeDashboard';
 import ManagerDashboard from './components/ManagerDashboard';
 import HRDashboard from './components/HRDashboard';
+import AdminDashboard from './components/AdminDashboard';
 import { setLogoutHandler, clearLogoutHandler } from './auth';
 // notifications removed per request
 
@@ -63,6 +64,7 @@ export default function App() {
                   {user.role === 'employee' && <EmployeeDashboard user={user} />}
                   {user.role === 'manager' && <ManagerDashboard user={user} />}
                   {user.role === 'hr' && <HRDashboard user={user} />}
+                  {user.role === 'admin' && <AdminDashboard user={user} />}
                 </div>
               )}
             </div>

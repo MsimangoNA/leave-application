@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import API from '../api';
+import LeaveForm from './LeaveForm';
 import { useToast } from '../ToastContext';
 import { useConfirm } from '../ConfirmContext';
 
 export default function HRDashboard({ user }) {
   const [leaves, setLeaves] = useState([]);
   const [users, setUsers] = useState([]);
+  const [accrual, setAccrual] = useState(null);
   const showToast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState('employees');
@@ -29,6 +31,7 @@ export default function HRDashboard({ user }) {
     try {
       const res = await API.get('/leaves/dashboard');
       setLeaves(res.data.leaves || []);
+      setAccrual(res.data.accrual || null);
     } catch (e) {
       console.error('Failed to load HR dashboard', e);
     }
@@ -101,6 +104,9 @@ export default function HRDashboard({ user }) {
         <li className="nav-item">
           <button className={`nav-link ${activeTab === 'leaves' ? 'active' : ''}`} onClick={() => setActiveTab('leaves')}>Leave Applications</button>
         </li>
+        <li className="nav-item">
+          <button className={`nav-link ${activeTab === 'apply' ? 'active' : ''}`} onClick={() => setActiveTab('apply')}>Apply Leave</button>
+        </li>
       </ul>
 
       {activeTab === 'employees' && (
@@ -166,6 +172,43 @@ export default function HRDashboard({ user }) {
               </ul>
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'leaves' && accrual && (
+        <div className="mb-3">
+          <div className="row g-2">
+            <div className="col-12 col-md-4">
+              <div className="card shadow-sm">
+                <div className="card-body">
+                  <div className="small text-muted">Annual Remaining</div>
+                  <div className="fw-bold">{accrual?.annual?.remaining ?? '-'}</div>
+                </div>
+              </div>
+            </div>
+            <div className="col-6 col-md-4">
+              <div className="card shadow-sm">
+                <div className="card-body">
+                  <div className="small text-muted">Sick Remaining</div>
+                  <div className="fw-bold">{accrual?.sick?.remaining ?? '-'}</div>
+                </div>
+              </div>
+            </div>
+            <div className="col-6 col-md-4">
+              <div className="card shadow-sm">
+                <div className="card-body">
+                  <div className="small text-muted">Family Remaining</div>
+                  <div className="fw-bold">{accrual?.family?.remaining ?? '-'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'apply' && (
+        <div>
+          <LeaveForm onApplied={() => { load(); setActiveTab('leaves'); }} />
         </div>
       )}
 
@@ -246,6 +289,7 @@ function UserListItem({ user, users, onUpdated, onDeleted, showToast, department
           <div>
             <div className="fw-bold">{user.name}</div>
             <div className="small text-muted">{user.email} • {user.role} {user.department ? '• ' + user.department : ''}</div>
+            <div className="small text-muted mt-1">Balances — Annual: {typeof user.annualRemaining === 'number' ? user.annualRemaining : '-'}, Sick: {typeof user.sickRemaining === 'number' ? user.sickRemaining : '-'}, Family: {typeof user.familyRemaining === 'number' ? user.familyRemaining : '-'}</div>
           </div>
           <div className="d-flex gap-2">
             <button className="btn btn-sm btn-outline-secondary" onClick={() => {

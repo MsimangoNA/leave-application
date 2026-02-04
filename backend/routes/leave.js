@@ -8,5 +8,8 @@ router.post('/:id/approve', auth, leaveCtrl.approveLeave);
 router.post('/:id/decline', auth, leaveCtrl.declineLeave);
 router.post('/:id/escalate', auth, leaveCtrl.escalateLeave);
 router.get('/dashboard', auth, leaveCtrl.getDashboard);
+router.get('/reports', auth, leaveCtrl.getReports);
+router.get('/reports/excel', auth, leaveCtrl.getReportsExcel);
+router.get('/reports/pdf', auth, leaveCtrl.getReportsPdf);
 
 module.exports = router;

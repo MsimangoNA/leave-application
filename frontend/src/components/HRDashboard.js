@@ -134,6 +134,7 @@ export default function HRDashboard({ user }) {
                     <select className="form-select" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}>
                       <option value="employee">Employee</option>
                       <option value="manager">Manager</option>
+                      <option value="hr">HR</option>
                     </select>
                   </div>
                   <div className="col-12 col-md-4">

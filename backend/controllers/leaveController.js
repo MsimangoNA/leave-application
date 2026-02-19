@@ -413,8 +413,8 @@ exports.escalateLeave = async (req, res) => {
   try {
     const leave = await Leave.findById(req.params.id).populate('applicant');
     if (!leave) return res.status(404).json({ msg: 'Leave not found' });
-    // only HR or manager can escalate
-    if (req.user.role !== 'hr' && req.user.role !== 'manager') return res.status(403).json({ msg: 'Forbidden' });
+    // allow HR, manager or admin to escalate
+    if (!['hr', 'manager', 'admin'].includes(req.user.role)) return res.status(403).json({ msg: 'Forbidden' });
     if (leave.status !== 'Pending') return res.status(400).json({ msg: 'Only pending leaves can be escalated' });
     // notify manager and HR
     if (leave.manager) {

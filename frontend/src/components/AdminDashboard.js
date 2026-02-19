@@ -32,6 +32,19 @@ export default function AdminDashboard({ user }) {
     }
   };
 
+  const escalate = async (id) => {
+    try {
+      const ok = await confirm({ title: 'Escalate Leave', message: 'Send escalation for this request?' });
+      if (!ok) return;
+      await API.post(`/leaves/${id}/escalate`);
+      showToast('Escalation sent', 'success');
+      load();
+    } catch (e) {
+      console.error('Escalation failed', e);
+      showToast('Escalation failed', 'error');
+    }
+  };
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -89,6 +102,7 @@ export default function AdminDashboard({ user }) {
                   <div className="d-flex flex-column flex-sm-row gap-2">
                     <button className="btn btn-sm btn-success btn-full-sm" onClick={() => act(l._id, 'approve')}><i className="bi bi-check-lg me-1"></i>Approve</button>
                     <button className="btn btn-sm btn-danger btn-full-sm" onClick={() => act(l._id, 'decline')}><i className="bi bi-x-lg me-1"></i>Decline</button>
+                    <button className="btn btn-sm btn-outline-primary btn-full-sm" onClick={() => escalate(l._id)}><i className="bi bi-arrow-up-right-circle me-1"></i>Escalate</button>
                   </div>
                 )}
               </div>

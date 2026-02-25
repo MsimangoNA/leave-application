@@ -34,6 +34,17 @@ export default function ManagerDashboard({ user }) {
     }
   };
 
+  const viewSickNote = async (id) => {
+    try {
+      const res = await API.get(`/leaves/${id}/sicknote`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(res.data);
+      window.open(url, '_blank');
+    } catch (e) {
+      console.error('Failed to open sick note', e);
+      try { alert(e.response?.data?.msg || 'Failed to open sick note'); } catch (er) {}
+    }
+  };
+
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -91,6 +102,9 @@ export default function ManagerDashboard({ user }) {
                 </div>
                 <p className="mb-1">{l.type} — {new Date(l.startDate).toDateString()} to {new Date(l.endDate).toDateString()}</p>
                 <p className="mb-2"><small className="text-muted">Reason: {l.reason}</small></p>
+                {l.sickNote && (
+                  <p className="mb-2"><a href="#" onClick={(e) => { e.preventDefault(); viewSickNote(l._id); }}>View sick note</a></p>
+                )}
                           {l.status === 'Pending' && (() => {
                             const applicantId = l.applicant ? (l.applicant._id || l.applicant.id || l.applicant) : null;
                             const currentUserId = user._id || user.id;

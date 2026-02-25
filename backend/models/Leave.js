@@ -7,6 +7,12 @@ const LeaveSchema = new mongoose.Schema({
   endDate: { type: Date, required: true },
   days: { type: Number, required: true },
   reason: { type: String },
+  sickNote: {
+    filename: { type: String },
+    originalName: { type: String },
+    mimeType: { type: String },
+    path: { type: String }
+  },
   status: { type: String, enum: ['Pending','Approved','Declined'], default: 'Pending' },
   department: { type: String },
   manager: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

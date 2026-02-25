@@ -5,6 +5,8 @@ const mailer = require('../utils/mailer');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const stream = require('stream');
+const fs = require('fs');
+const path = require('path');
 
 function monthsBetween(a, b) {
   const years = b.getFullYear() - a.getFullYear();
@@ -102,7 +104,19 @@ exports.applyLeave = async (req, res) => {
     if (type === 'sick' && days > accrual.sick.remaining) return res.status(400).json({ msg: 'Not enough sick leave remaining', remaining: accrual.sick.remaining });
     if (type === 'family' && days > accrual.family.remaining) return res.status(400).json({ msg: 'Not enough family responsibility leave remaining', remaining: accrual.family.remaining });
 
-    const leave = new Leave({ applicant: applicant._id, type, startDate: start, endDate: end, days, reason: reason || `${type} leave`, department: dbUser ? dbUser.department : applicant.department, manager: dbUser ? dbUser.manager : applicant.manager });
+    // require sick note file for sick leave
+    if (type === 'sick' && !req.file) return res.status(400).json({ msg: 'Sick leave requires a sick note attachment' });
+
+    const leaveData = { applicant: applicant._id, type, startDate: start, endDate: end, days, reason: reason || `${type} leave`, department: dbUser ? dbUser.department : applicant.department, manager: dbUser ? dbUser.manager : applicant.manager };
+    if (req.file) {
+      leaveData.sickNote = {
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        path: req.file.path
+      };
+    }
+    const leave = new Leave(leaveData);
     await leave.save();
     // decrement stored remaining for annual leaves (persist entitlement)
     if (dbUser) {
@@ -428,6 +442,37 @@ exports.escalateLeave = async (req, res) => {
     }
     if (process.env.HR_EMAIL) mailer.sendMail(process.env.HR_EMAIL, 'Leave escalation', `Leave for ${leave.applicant.name} has been escalated by ${req.user.name}.`);
     res.json({ msg: 'Escalation notifications sent' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+};
+
+// Serve sick note file to authorized users (manager of applicant, HR, admin, or applicant)
+exports.getSickNote = async (req, res) => {
+  try {
+    const leave = await Leave.findById(req.params.id).populate('applicant');
+    if (!leave) return res.status(404).json({ msg: 'Leave not found' });
+    if (!leave.sickNote || !leave.sickNote.path) return res.status(404).json({ msg: 'No sick note attached' });
+
+    const user = req.user;
+    const isAdminOrHR = user.role === 'admin' || user.role === 'hr';
+    const isApplicant = String(user._id) === String(leave.applicant._id);
+    const isManager = (leave.manager && String(leave.manager) === String(user._id)) || (leave.applicant && leave.applicant.manager && String(leave.applicant.manager) === String(user._id));
+    if (!isAdminOrHR && !isApplicant && !isManager) return res.status(403).json({ msg: 'Forbidden' });
+
+    const absPath = path.resolve(process.cwd(), leave.sickNote.path);
+    if (!fs.existsSync(absPath)) return res.status(404).json({ msg: 'File not found on server' });
+
+    res.setHeader('Content-Type', leave.sickNote.mimeType || 'application/octet-stream');
+    // let browser decide inline rendering for images/pdf; set filename for download
+    res.setHeader('Content-Disposition', `inline; filename="${leave.sickNote.originalName || 'sicknote'}"`);
+    const streamFile = fs.createReadStream(absPath);
+    streamFile.on('error', (err) => {
+      console.error('Error streaming sick note:', err);
+      res.status(500).end('Failed to read file');
+    });
+    streamFile.pipe(res);
   } catch (err) {
     console.error(err);
     res.status(500).send('Server error');

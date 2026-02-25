@@ -8,6 +8,7 @@ export default function LeaveForm({ onApplied }) {
   const [reason, setReason] = useState('');
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [sickNote, setSickNote] = useState(null);
 
   const validate = () => {
     setErr(null);
@@ -25,6 +26,8 @@ export default function LeaveForm({ onApplied }) {
       if (reason && reason.trim().length > 0 && reason.trim().length < 8) { setErr('Reason must be at least 8 characters when provided'); return false; }
     } else {
       if (!reason || reason.trim().length < 8) { setErr('Please provide a reason (min 8 characters)'); return false; }
+      // sick leave requires an attached sick note file
+      if (type === 'sick' && !sickNote) { setErr('Please attach a sick note for sick leave'); return false; }
     }
     return true;
   };
@@ -34,9 +37,22 @@ export default function LeaveForm({ onApplied }) {
     setErr(null);
     setLoading(true);
     try {
-      await API.post('/leaves/apply', { type, startDate, endDate, reason });
+      // send as multipart if there's a file
+      const hasFile = !!sickNote;
+      if (hasFile) {
+        const fd = new FormData();
+        fd.append('type', type);
+        fd.append('startDate', startDate);
+        fd.append('endDate', endDate);
+        fd.append('reason', reason);
+        fd.append('sickNote', sickNote);
+        await API.post('/leaves/apply', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      } else {
+        await API.post('/leaves/apply', { type, startDate, endDate, reason });
+      }
       onApplied();
       setReason(''); setStartDate(''); setEndDate('');
+      setSickNote(null);
     } catch (e) {
       setErr(e.response?.data?.msg || 'Failed to apply');
     } finally {
@@ -78,6 +94,14 @@ export default function LeaveForm({ onApplied }) {
             <textarea className="form-control" rows="3" value={reason} onChange={e => setReason(e.target.value)} />
             {type === 'annual' && <div className="form-text">Reason is optional for Annual leave</div>}
           </div>
+
+          {type === 'sick' && (
+            <div className="col-12">
+              <label className="form-label">Sick note (attach)</label>
+              <input className="form-control" type="file" accept="image/*,application/pdf" onChange={e => setSickNote(e.target.files?.[0] || null)} />
+              {sickNote && <div className="form-text">Selected: {sickNote.name}</div>}
+            </div>
+          )}
 
           <div className="col-12">
             <button className="btn btn-success btn-full-sm" onClick={submit} disabled={loading}>{loading ? <><i className="bi bi-arrow-repeat me-1"></i>Applying...</> : <><i className="bi bi-send-check me-1"></i>Apply</>}</button>

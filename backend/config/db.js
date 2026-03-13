@@ -1,21 +1,16 @@
-import mongoose from 'mongoose';
-import { logger } from '../utils/logger.js';
+const mongoose = require('mongoose');
 
-export const connectDB = async () => {
-  if (!process.env.MONGODB_URI) {
-    logger.error('MONGODB_URI is not defined. Set the MONGODB_URI environment variable.');
-    throw new Error('MONGODB_URI is not defined');
+module.exports = function connectDB() {
+  const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
+  if (!uri) {
+    console.error('MONGO_URI or MONGODB_URI is not set. Set one of these environment variables.');
+    process.exit(1);
   }
 
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
-
-    logger.info(`MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    logger.error('MongoDB connection error:', error);
-    throw error;
-  }
+  mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => {
+      console.error('MongoDB connection error', err);
+      process.exit(1);
+    });
 };
-
-// Helper to expose connection state to other modules
-export const isDBConnected = () => mongoose.connection && mongoose.connection.readyState === 1;

@@ -48,3 +48,10 @@ cd leaveapplication/frontend
 npm install
 npm start
 ```
+
+Deployment / Render notes
+------------------------
+
+- If you deploy the backend as a service with Root Directory set to `backend`, set the Build Command to `npm run build` and add the environment variable `REACT_APP_API_URL` to point to your backend API (for example `https://leaveapplication-i0lt.onrender.com/api`).
+- Alternatively, deploy the frontend separately and set `REACT_APP_API_URL` in the frontend service environment.
+

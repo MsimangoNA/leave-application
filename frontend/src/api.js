@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { invokeLogout } from './auth';
 
-const API = axios.create({ baseURL: 'http://localhost:4000/api' });
+const baseURL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+const API = axios.create({ baseURL });
 
 // attach token from localStorage automatically
 API.interceptors.request.use((config) => {

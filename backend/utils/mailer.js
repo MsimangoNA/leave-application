@@ -49,6 +49,15 @@ function createSmtpTransport() {
   try {
     transporter = await createOAuth2Transport();
     if (!transporter) transporter = createSmtpTransport();
+    // verify transporter so errors surface in startup logs
+    if (transporter && transporter.verify) {
+      try {
+        await transporter.verify();
+        console.log('Mail transporter verified');
+      } catch (verifyErr) {
+        console.error('Mail transporter verification failed', verifyErr);
+      }
+    }
   } catch (err) {
     console.error('Error creating mail transporter', err);
     transporter = createSmtpTransport();

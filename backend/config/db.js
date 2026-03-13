@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 
 module.exports = function connectDB() {
-  const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
+  const uriRaw = process.env.MONGO_URI || process.env.MONGODB_URI;
+  // fix common typo seen in deploy: "sretryWrites" instead of "retryWrites"
+  const uri = uriRaw && uriRaw.replace(/s?retryWrites=/i, 'retryWrites=');
   if (!uri) {
     console.error('MONGO_URI or MONGODB_URI is not set. Set one of these environment variables.');
     process.exit(1);

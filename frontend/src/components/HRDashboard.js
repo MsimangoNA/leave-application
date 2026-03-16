@@ -16,12 +16,11 @@ export default function HRDashboard({ user }) {
     'Software Developer',
     'Web Developer',
     'IT',
-    'Sales',
+    'Monitoring and Evaluation',
     'HR',
     'Finance',
     'Marketing',
-    'Operations',
-    'Customer Success'
+    'Communication'
   ];
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'employee', department: DEPARTMENTS[0], managerId: '', hireDate: '' });
   const [creating, setCreating] = useState(false);

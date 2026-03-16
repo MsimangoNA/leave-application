@@ -17,7 +17,7 @@ export default function HRDashboard({ user }) {
     'Web Developer',
     'IT',
     'Monitoring and Evaluation',
-    'Training and Skills Development'
+    'Training and Skills Development',
     'HR',
     'Finance',
     'Marketing',

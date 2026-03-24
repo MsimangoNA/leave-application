@@ -21,7 +21,7 @@ export default function HRDashboard({ user }) {
     'HR',
     'Finance',
     'Marketing',
-    'Communication'
+    'Communication',
   ];
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'employee', department: DEPARTMENTS[0], managerId: '', hireDate: '' });
   const [creating, setCreating] = useState(false);
